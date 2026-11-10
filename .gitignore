@@ -16,3 +16,4 @@ data/
 work/
 logs/*.out
 logs/*.err
+.DS_Store

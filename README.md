@@ -96,7 +96,7 @@ sbatch scell.sh
 
 Analysis code for the single-nucleus part of the article *Interferon-linked transcription and chromatin
 accessibility extend to naive T cells in multisystem inflammatory syndrome in children: a paired
-multi-omic cohort study* (Jenko Bizjan et al., submitted to eBioMedicine).
+multi-omic cohort study* (Jenko Bizjan et al., submitted).
 
 Ten children, one flare and one remission PBMC sample each (10x Genomics Multiome, RNA and ATAC in the
 same nuclei). The patient, not the nucleus, is the unit of analysis throughout: counts are summed per
