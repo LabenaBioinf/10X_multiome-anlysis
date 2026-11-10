@@ -1,0 +1,18 @@
+# Never commit data or results: patient-level data must not leave the hospital.
+*.rds
+*.RData
+*.h5
+*.h5ad
+*.bam
+*.cram
+*.fastq*
+*.vcf*
+*.xlsx
+*.csv
+*.tsv
+*.tsv.gz
+results/
+data/
+work/
+logs/*.out
+logs/*.err

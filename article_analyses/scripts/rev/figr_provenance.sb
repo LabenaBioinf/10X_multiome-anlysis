@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH --job-name=misc_figr_prov
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=8G
+#SBATCH --time=01:00:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+set -euo pipefail
+PROJ=/path/to/workdir
+F=/path/to/FigR
+python3 -I "$PROJ/scripts/rev/figr_provenance.py" \
+    "$PROJ/tables_extracted/AF2__17_Table_S8.tsv" "$PROJ/results/figr_provenance" \
+    "CD8_TEM=$F/FigR_results_1_cell_type_3/CD8 TEM_MISC_FigR/CD8 TEM_MISC_figR_d.txt,$F/FigR_results_1_cell_type_3/CD8 TEM_Control_FigR/CD8 TEM_Control_figR_d.txt" \
+    "gdT=$F/FigR_results_gdT/gdT_MISC_FigR/gdT_MISC_figR_d.txt,$F/FigR_results_gdT/gdT_Control_FigR/gdT_Control_figR_d.txt"

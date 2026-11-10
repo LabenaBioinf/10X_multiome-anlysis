@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH --job-name=misc_pb_designfilter_panel
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=32G
+#SBATCH --time=01:00:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+
+set -euo pipefail
+WORKDIR=/path/to/workdir
+# container cache/tmp settings go here
+
+# Read-only: the full harmonized object and the container that holds Seurat/edgeR.
+export APPTAINER_BIND="/path/to/FigR"
+
+PROJ="$WORKDIR"
+echo "job $SLURM_JOB_ID on $(hostname), started $(date -Is)"
+apptainer exec /path/to/FigR/SC_GEX-ATAC.sif \
+    Rscript "$PROJ/scripts/pb/pseudobulk_designfilter_panel.R" \
+            "$PROJ/results/pseudobulk/pseudobulk_counts.rds" \
+            "$PROJ/results/pseudobulk_followup/key_gene_panel_pseudobulk.tsv" \
+            "$PROJ/results/pseudobulk_designfilter_panel"
+echo "finished $(date -Is)"

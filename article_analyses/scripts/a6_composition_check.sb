@@ -1,0 +1,21 @@
+#!/bin/bash
+#SBATCH --job-name=misc_a6_comp
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=00:15:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+
+set -euo pipefail
+
+WORKDIR=/path/to/workdir
+# container cache/tmp settings go here
+
+export APPTAINER_BIND="/path/to/MISC/MISC/cell_counts"
+
+PROJ="$WORKDIR"
+apptainer exec "/path/to/containers/r-immunedeconv_2.1.2--r44hdfd78af_3.sif" \
+    Rscript "$PROJ/scripts/a6_composition_check.R" \
+            /path/to/MISC/MISC/cell_counts \
+            "$PROJ/results/a6_composition"

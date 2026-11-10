@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH --job-name=misc_figr_3lvl
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4G
+#SBATCH --time=00:30:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+set -euo pipefail
+WORKDIR=/path/to/workdir
+export APPTAINER_BIND="/path/to/FigR"
+PROJ=$WORKDIR
+R=$PROJ/results
+# nuclei = columns of dorcMat.txt (CD8 TEM 1678/4434, gdT 1131/3010); k = 40 as in both FigR scripts
+python3 -I "$PROJ/scripts/rev/figr_three_level.py" \
+    "$R/figr_provenance/S8_edge_provenance.tsv" "$R/figr_three_level" 40 \
+    "CD8_TEM=1678,4434,$R/figr_differential/CD8_TEM_published_S8_edge_status.tsv" \
+    "gdT=1131,3010,$R/figr_differential/gdT_published_S8_edge_status.tsv"
+# Figure 6 from the joint flare+remission FigR run (figr_differential_edges.R)
+# container cache/tmp settings go here
+apptainer exec /path/to/FigR/SC_GEX-ATAC.sif \
+    Rscript "$PROJ/scripts/rev/figr_figure6.R" \
+    "$R/figr_differential/CD8_TEM_differential_edges.tsv" "$R/figr_differential/gdT_differential_edges.tsv" \
+    "$PROJ/tables_extracted/AF2__19_Table_S8a_long.tsv" "$R/figr_three_level/SUMMARY.tsv" \
+    "$R/figr_three_level/Figure6_revised"

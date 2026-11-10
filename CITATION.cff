@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the article below."
+title: "Analysis code: Interferon-linked transcription and chromatin accessibility extend to naive T cells in multisystem inflammatory syndrome in children"
+version: "1.0"
+license: MIT
+authors:
+  - {family-names: "Jenko Bizjan", given-names: "Barbara"}
+  - {family-names: "Kovač", given-names: "Jernej"}
+  - {family-names: "Tesovnik", given-names: "Tine"}
+  - {family-names: "Šket", given-names: "Robert"}
+  - {family-names: "Debeljak", given-names: "Maruša"}
+  - {family-names: "Zajc Avramovič", given-names: "Mojca"}
+  - {family-names: "Emeršič", given-names: "Nina"}
+  - {family-names: "Vrhovšek", given-names: "Blaž"}
+  - {family-names: "Sabolić", given-names: "Iva"}
+  - {family-names: "Smole", given-names: "Anže"}
+  - {family-names: "Avčin", given-names: "Tadej"}
+preferred-citation:
+  type: article
+  title: "Interferon-linked transcription and chromatin accessibility extend to naive T cells in multisystem inflammatory syndrome in children: a paired multi-omic cohort study"
+  journal: "eBioMedicine (submitted)"
+  authors:
+    - {family-names: "Jenko Bizjan", given-names: "Barbara"}
+    - {name: "et al."}

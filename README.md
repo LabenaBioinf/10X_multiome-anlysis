@@ -30,14 +30,13 @@ The script sources several other R scripts that rely on packages such as [Seurat
 #### GSEA.R
 * run gene set enrichment analysis uding fgsea and irGSEA
 
-#### FigR_networks_Control.R
-* run regulatory network and DORC analysis using cisTopic and FigR for Remission state
-
-#### FigR_networks_MISC.R
-* run regulatory network and DORC analysis using cisTopic and FigR for state in MISC flare
+#### FigR_networks_Control.R, FigR_networks_MISC.R (+ `.sh` SLURM wrappers)
+* run regulatory network and DORC analysis using cisTopic and FigR per cell type, separately for remission (`Control`) and MIS-C flare (`MISC`)
+* details of the per-cell-type runs: `article_analyses/docs/FigR_per_cell_type.md`
 
 #### keep_only_flare_network_correlations.R
-* retaine only significant gene-peak correlations exclusively present during MIS-C flare
+* retain only TF–DORC associations that are significant in flare (Corr.P < 0.05) and not significant with the same sign in remission (flare-only associations, Supplementary Table S8)
+* the corrected version: repressor subsets are taken from the flare (`MISC`) table, and each gene set uses its own network objects
 
 
 ## scCODA.py
@@ -89,3 +88,64 @@ Run the command bellow to submit a job:
 
 ```bash
 sbatch scell.sh
+
+
+---
+
+# Article analyses (`article_analyses/`)
+
+Analysis code for the single-nucleus part of the article *Interferon-linked transcription and chromatin
+accessibility extend to naive T cells in multisystem inflammatory syndrome in children: a paired
+multi-omic cohort study* (Jenko Bizjan et al., submitted to eBioMedicine).
+
+Ten children, one flare and one remission PBMC sample each (10x Genomics Multiome, RNA and ATAC in the
+same nuclei). The patient, not the nucleus, is the unit of analysis throughout: counts are summed per
+patient × time point × population (pseudobulk) and tested with a paired design.
+
+The input objects are built with the pipeline above (`SC_GEX-ATAC.R` and `scripts/`). Whole-blood
+RNA-seq, cytokines, exome/HLA, public cohorts and the figure scripts are in the companion repository
+(CISLD; see the article's Data sharing statement).
+
+**No data are included.** Processed single-nucleus data are in GEO (GSE301727). Paths are written as
+`/path/to/...`; set `WORKDIR` in each job file to the `article_analyses` folder, which must also hold the
+`results/` tree and the input objects.
+
+## Contents
+
+
+| Article item | Script (job file) | What it does |
+|---|---|---|
+| Table S5, Figure 4B | `scripts/pb/pseudobulk_edgeR.R` (`.sb`) | RNA pseudobulk per patient × time point × population (≥10 nuclei); edgeR quasi-likelihood `~ patient + condition`, `filterByExpr`, TMM, genome-wide BH; camera on Hallmark sets; populations with ≥4 complete pairs |
+| Table S6, Figure 5A, Figure 8 values | `scripts/pb/pseudobulk_followup.R` (`.sb`) | targeted (post hoc) key-gene panel from the same model; genome-wide and panel FDR |
+| Table S6b | `scripts/pb/pseudobulk_designfilter.R`, `pseudobulk_designfilter_panel.R` (`.sb`) | sensitivity analysis with design-aware expression filtering |
+| Figure 3C, Tables S4, S4b | `scripts/a6_composition_check.R` (`.sb`), `scripts/rev/composition_sensitivity_each20.py` | exact paired tests of population proportions, BH over 30 populations; sensitivity analysis requiring ≥20 nuclei in each sample |
+| Table S10; ATAC pseudobulk | `scripts/rev/object_level_checks.R` (`.sb`) | TRBV11-2 detection per sample; writes the ATAC pseudobulk used by chromVAR |
+| Figure 6A, Table S8e | `scripts/rev/gdt_chromvar.R` (`.sb`) | chromVAR deviations (cisBP motifs, families) on the ATAC pseudobulk (≥20 nuclei per sample); limma `~ patient + condition`; BH within population |
+| Figure 6A (extension), Table S8g | `scripts/rev/chromvar_naive_extension.R` (`.sb`) | the same analysis in naive CD4⁺, naive CD8⁺, naive B and regulatory T cells; written pre-declaration in `docs/` |
+| Flare-only associations (input of Table S8) | `../scripts/FigR_networks_*.R` (`.sh`), then `../scripts/keep_only_flare_network_correlations.R` | separate FigR runs per phase and population |
+| Table S8 provenance | `scripts/rev/figr_provenance.py` (`.sb`) | reproduces Table S8 from the per-phase FigR outputs |
+| Table S8, Figure 6B–C, Supplementary Figure S4A | `scripts/rev/figr_differential_edges.R` (`.sb`) | flare and remission nuclei analysed together; motif-supported TF–DORC pairs; difference tested by exact within-patient permutation |
+| Table S8b, Supplementary Figure S4B | `scripts/rev/figr_three_level.py` (`.sb`) | flare–remission difference of the flare-only associations with nuclei as the unit, after k-NN correction, and with the patient as the unit |
+| Table S8d | `scripts/rev/figr_module_test.R` (`.sb`), `figr_module_test_minlib.R` (`figr_module_test_min20.sb`), `scripts/rev/consistency_rule.py` | transcription factor module tests; ≥30 and ≥20 nuclei per library; post hoc consistency rule |
+| Table S8f | `scripts/rev/figr_nk.R` (`.sb`) | the same tests in NK cells |
+| Tables S8d–f | `scripts/rev/figr_supp_tables_v4.py` | builds the supplementary tables from the results |
+| Figures 3, 5, 6A inputs | `scripts/rev/figure_data_sc.R` | per-sample values plotted in the figures |
+
+Run order: `pseudobulk_edgeR` → `pseudobulk_followup` / `pseudobulk_designfilter*`; `object_level_checks`
+→ `gdt_chromvar` → `chromvar_naive_extension`; `figr_differential_edges` → `figr_three_level`,
+`figr_module_test*`, `figr_nk` → `consistency_rule` → `figr_supp_tables_v4`. Figures: `scripts/figures.sb`
+in the companion repository.
+
+In the FigR scripts, variables and output columns named `published*` or `S8` refer to the flare-only
+associations listed in Supplementary Table S8 (defined in the article's Methods).
+
+## Software
+
+
+Jobs are SLURM batch files that run each step in an Apptainer container (`apptainer exec`). The R
+container holds Seurat 5.1.0, Signac 1.13.0, edgeR, limma, chromVAR, FigR and ggplot2; versions of all
+tools are given in the article's Methods. Python scripts need Python ≥ 3.8 (standard library unless noted).
+
+## Licence and citation
+
+MIT licence (see `LICENSE`). Please cite the article (see `CITATION.cff`).
