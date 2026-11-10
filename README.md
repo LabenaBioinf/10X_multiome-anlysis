@@ -104,7 +104,7 @@ patient × time point × population (pseudobulk) and tested with a paired design
 
 The input objects are built with the pipeline above (`SC_GEX-ATAC.R` and `scripts/`). Whole-blood
 RNA-seq, cytokines, exome/HLA, public cohorts and the figure scripts are in the companion repository
-(CISLD; see the article's Data sharing statement).
+[CISLD/MISC-bulk-cytokines-exome](https://github.com/CISLD/MISC-bulk-cytokines-exome).
 
 **No data are included.** Processed single-nucleus data are in GEO (GSE301727). Paths are written as
 `/path/to/...`; set `WORKDIR` in each job file to the `article_analyses` folder, which must also hold the
@@ -148,4 +148,4 @@ tools are given in the article's Methods. Python scripts need Python ≥ 3.8 (st
 
 ## Licence and citation
 
-MIT licence (see `LICENSE`). Please cite the article (see `CITATION.cff`).
+MIT licence (see `LICENSE`). Please cite the article (see `CITATION.cff`). The code version used in the article is archived at https://doi.org/10.5281/zenodo.24120696.
