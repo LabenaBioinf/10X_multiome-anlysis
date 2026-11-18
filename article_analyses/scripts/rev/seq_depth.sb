@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=misc_seq_depth
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=150G
+#SBATCH --time=02:00:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+set -euo pipefail
+WORKDIR=/path/to/workdir
+# container cache/tmp settings go here
+export APPTAINER_BIND="/path/to/FigR"
+PROJ="$WORKDIR"
+mkdir -p "$PROJ/results/seq_depth"
+apptainer exec /path/to/FigR/SC_GEX-ATAC.sif \
+    Rscript "$PROJ/scripts/rev/seq_depth.R" \
+            /path/to/FigR/objects/harmonized_seurat.rds "$PROJ/results/seq_depth"

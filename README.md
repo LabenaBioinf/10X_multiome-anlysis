@@ -28,14 +28,14 @@ The script sources several other R scripts that rely on packages such as [Seurat
 * identify differentially expressed genes in each cell type across conditions
 
 #### GSEA.R
-* run gene set enrichment analysis uding fgsea and irGSEA
+* run gene set enrichment analysis using fgsea and irGSEA (exploratory step of the pipeline; the gene-set results of the article are from camera on paired pseudobulk models, `article_analyses/scripts/pb/pseudobulk_edgeR.R`)
 
 #### FigR_networks_Control.R, FigR_networks_MISC.R (+ `.sh` SLURM wrappers)
 * run regulatory network and DORC analysis using cisTopic and FigR per cell type, separately for remission (`Control`) and MIS-C flare (`MISC`)
 * details of the per-cell-type runs: `article_analyses/docs/FigR_per_cell_type.md`
 
 #### keep_only_flare_network_correlations.R
-* retain only TF–DORC associations that are significant in flare (Corr.P < 0.05) and not significant with the same sign in remission (flare-only associations, Supplementary Table S8)
+* retain only TF–DORC associations that are significant in flare (Corr.P < 0.05) and not significant with the same sign in remission (flare-only associations; this analysis is not reported in the final article)
 * the corrected version: repressor subsets are taken from the flare (`MISC`) table, and each gene set uses its own network objects
 
 
@@ -116,28 +116,30 @@ RNA-seq, cytokines, exome/HLA, public cohorts and the figure scripts are in the 
 | Article item | Script (job file) | What it does |
 |---|---|---|
 | Table S5, Figure 4B | `scripts/pb/pseudobulk_edgeR.R` (`.sb`) | RNA pseudobulk per patient × time point × population (≥10 nuclei); edgeR quasi-likelihood `~ patient + condition`, `filterByExpr`, TMM, genome-wide BH; camera on Hallmark sets; populations with ≥4 complete pairs |
-| Table S6, Figure 5A, Figure 8 values | `scripts/pb/pseudobulk_followup.R` (`.sb`) | targeted (post hoc) key-gene panel from the same model; genome-wide and panel FDR |
-| Table S6b | `scripts/pb/pseudobulk_designfilter.R`, `pseudobulk_designfilter_panel.R` (`.sb`) | sensitivity analysis with design-aware expression filtering |
+| Table S6, Figures 4C, 5A and 8 values | `scripts/pb/pseudobulk_followup.R` (`.sb`) | targeted (post hoc) key-gene panel, which only selects the genes shown: log2 fold change, p value and genome-wide FDR from the primary model of `pseudobulk_edgeR.R`; targeted gene sets (de-duplicated) tested with camera on the primary model (Tables S5b, S5c). The script also writes a panel FDR (Benjamini–Hochberg over the 120 panel genes, from a separate fit that includes panel genes below the expression filter with at least five reads). The article does not use it: every significance statement uses a genome-wide FDR |
+| Table S6b, Figures 4C, 5A and 8 (genes below the primary filter) | `scripts/pb/pseudobulk_designfilter.R`, `pseudobulk_designfilter_panel.R` (`.sb`) | sensitivity analysis with an alternative full-design expression filter (filterByExpr given the paired design matrix). Its genome-wide FDR is reported for panel genes that are below the primary expression filter (marked ‡ in the article) |
 | Figure 3C, Tables S4, S4b | `scripts/a6_composition_check.R` (`.sb`), `scripts/rev/composition_sensitivity_each20.py` | exact paired tests of population proportions, BH over 30 populations; sensitivity analysis requiring ≥20 nuclei in each sample |
 | Table S10; ATAC pseudobulk | `scripts/rev/object_level_checks.R` (`.sb`) | TRBV11-2 detection per sample; writes the ATAC pseudobulk used by chromVAR |
 | Figure 6A, Table S8e | `scripts/rev/gdt_chromvar.R` (`.sb`) | chromVAR deviations (cisBP motifs, families) on the ATAC pseudobulk (≥20 nuclei per sample); limma `~ patient + condition`; BH within population |
-| Figure 6A (extension), Table S8g | `scripts/rev/chromvar_naive_extension.R` (`.sb`) | the same analysis in naive CD4⁺, naive CD8⁺, naive B and regulatory T cells; written pre-declaration in `docs/` |
-| Flare-only associations (input of Table S8) | `../scripts/FigR_networks_*.R` (`.sh`), then `../scripts/keep_only_flare_network_correlations.R` | separate FigR runs per phase and population |
-| Table S8 provenance | `scripts/rev/figr_provenance.py` (`.sb`) | reproduces Table S8 from the per-phase FigR outputs |
-| Table S8, Figure 6B–C, Supplementary Figure S4A | `scripts/rev/figr_differential_edges.R` (`.sb`) | flare and remission nuclei analysed together; motif-supported TF–DORC pairs; difference tested by exact within-patient permutation |
-| Table S8b, Supplementary Figure S4B | `scripts/rev/figr_three_level.py` (`.sb`) | flare–remission difference of the flare-only associations with nuclei as the unit, after k-NN correction, and with the patient as the unit |
-| Table S8d | `scripts/rev/figr_module_test.R` (`.sb`), `figr_module_test_minlib.R` (`figr_module_test_min20.sb`), `scripts/rev/consistency_rule.py` | transcription factor module tests; ≥30 and ≥20 nuclei per library; post hoc consistency rule |
-| Table S8f | `scripts/rev/figr_nk.R` (`.sb`) | the same tests in NK cells |
-| Tables S8d–f | `scripts/rev/figr_supp_tables_v4.py` | builds the supplementary tables from the results |
+| Figure 6A (extension), Table S8f | `scripts/rev/chromvar_naive_extension.R` (`.sb`) | the same analysis in naive CD4⁺, naive CD8⁺, naive B and regulatory T cells; written pre-declaration in `docs/` |
+| Not in the final article: flare-only associations | `../scripts/FigR_networks_*.R` (`.sh`), `../scripts/keep_only_flare_network_correlations.R`, `scripts/rev/figr_provenance.py` (`.sb`) | separate FigR runs per phase and population and the flare-only filter (earlier Table S8). Kept for transparency, not used for any reported result |
+| Tables S8a–b, Supplementary Figures S4–S5 | `scripts/rev/figr_differential_edges.R` (`.sb`) | flare and remission nuclei analysed together; motif-supported TF–DORC pairs; difference tested by exact within-patient permutation |
+| (input of `figr_figure6_v16.R` in the companion repository) | `scripts/rev/figr_three_level.py` (`.sb`) | flare–remission difference of the flare-only associations with nuclei as the unit, after k-NN correction, and with the patient as the unit. Not reported in the final article |
+| Table S8d | `scripts/rev/figr_module_test.R` (`.sb`), `figr_module_test_minlib.R` (`figr_module_test_min20.sb`), then `scripts/rev/figr_modules_table_s8d.py` | transcription factor module tests; ≥30 and ≥20 nuclei per library. `figr_modules_table_s8d.py` removes the three modules defined on the flare-only associations and recomputes the FDR over the remaining modules. `scripts/rev/consistency_rule.py` is not used in the final article |
+| Table S8c | `scripts/rev/figr_nk.R` (`.sb`) | the same tests in NK cells |
+| Tables S8c–e (inputs) | `scripts/rev/figr_supp_tables_v4.py` | builds the table files from the results (input of `figr_modules_table_s8d.py`) |
+| Table S8g | `scripts/rev/chromvar_depth_sensitivity.R` (`.sb`) | sequencing-depth sensitivity analysis of the chromVAR results: reproduces the published z analysis, then bias-corrected deviations and equal-depth binomial thinning of the deeper pseudobulk of each pair (five seeds), same peaks, background peaks, motifs, model and FDR families |
 | Figures 3, 5, 6A inputs | `scripts/rev/figure_data_sc.R` | per-sample values plotted in the figures |
+| Methods, sequencing depth | `scripts/rev/seq_depth.R` (`.sb`) | median raw GEX and ATAC read pairs per nucleus per library, from the Cell Ranger ARC per-barcode metrics in the object |
+| Tables S5d, S5f and S6c (ambient RNA sensitivity analysis) | `scripts/ambient/soupx_pseudobulk.R` (`.sb`), `soupx_concordance.py`, `soupx_text_numbers.py` | SoupX 1.6.2 on the unfiltered Cell Ranger ARC matrices (ambient profile from empty droplets, annotated populations as clusters, automatic contamination estimate, immunoglobulin-based estimate in non-B populations for comparison and as fallback; seeded `adjustCounts`), corrected counts summed per population and library; the job file then reruns `pseudobulk_edgeR.R` and `pseudobulk_followup.R` on the corrected counts, computes the global log2 fold-change concordance (Table S5f) and the numbers cited in the text |
 
 Run order: `pseudobulk_edgeR` → `pseudobulk_followup` / `pseudobulk_designfilter*`; `object_level_checks`
-→ `gdt_chromvar` → `chromvar_naive_extension`; `figr_differential_edges` → `figr_three_level`,
-`figr_module_test*`, `figr_nk` → `consistency_rule` → `figr_supp_tables_v4`. Figures: `scripts/figures.sb`
+→ `gdt_chromvar` → `chromvar_naive_extension` → `chromvar_depth_sensitivity`; `pseudobulk_edgeR` → `ambient/soupx_pseudobulk`;
+`figr_differential_edges` → `figr_three_level`, `figr_module_test*`, `figr_nk` → `figr_supp_tables_v4` → `figr_modules_table_s8d`. Figures: `scripts/figures.sb`
 in the companion repository.
 
 In the FigR scripts, variables and output columns named `published*` or `S8` refer to the flare-only
-associations listed in Supplementary Table S8 (defined in the article's Methods).
+associations of an earlier version of the article (earlier Supplementary Table S8), not to the final Table S8.
 
 ## Software
 
@@ -148,4 +150,4 @@ tools are given in the article's Methods. Python scripts need Python ≥ 3.8 (st
 
 ## Licence and citation
 
-MIT licence (see `LICENSE`). Please cite the article (see `CITATION.cff`). The code version used in the article is archived at https://doi.org/10.5281/zenodo.24120696.
+MIT licence (see `LICENSE`). Please cite the article (see `CITATION.cff`). The code used in the article is release v2.1, archived on Zenodo (all versions: https://doi.org/10.5281/zenodo.24120695).

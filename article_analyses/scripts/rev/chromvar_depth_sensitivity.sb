@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH --job-name=chromvar_depth
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=06:00:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+# Supplementary Table S8g. Input: results/object_level (ATAC pseudobulk from object_level_checks.R).
+set -euo pipefail
+WORKDIR=/path/to/workdir
+# container cache/tmp settings go here
+export APPTAINER_BIND="/path/to/FigR"
+apptainer exec /path/to/FigR/SC_GEX-ATAC.sif Rscript "$WORKDIR/scripts/rev/chromvar_depth_sensitivity.R" \
+  "$WORKDIR/results/object_level" "$WORKDIR/results/chromvar_depth_sensitivity"

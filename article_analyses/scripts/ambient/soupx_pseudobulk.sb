@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --job-name=soupx_pseudobulk
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=120G
+#SBATCH --time=08:00:00
+# Ambient RNA sensitivity analysis (Supplementary Tables S5d, S5f, S6c): SoupX on the unfiltered Cell Ranger ARC
+# matrices, then the unchanged pseudobulk scripts on the corrected counts. SoupX 1.6.2 is installed in an extra R library (R_LIB).
+set -euo pipefail
+WORKDIR=/path/to/workdir
+SIF=/path/to/FigR/SC_GEX-ATAC.sif
+R_LIB=/path/to/R_libs
+export APPTAINER_BIND="/path/to/FigR,/path/to/cellranger_arc_results"
+R="$WORKDIR/results/ambient_soupx"; mkdir -p "$R/pseudobulk" "$R/pseudobulk_followup"
+apptainer exec $SIF Rscript "$WORKDIR/scripts/ambient/soupx_pseudobulk.R" \
+  /path/to/FigR/objects/harmonized_seurat.rds /path/to/cellranger_arc_results \
+  "$WORKDIR/results/pseudobulk/pseudobulk_counts.rds" "$R" "$R_LIB"
+# pseudobulk_edgeR.R uses pseudobulk_counts.rds in its output folder when it exists (the object is then not read)
+cp "$R/pseudobulk_counts_soupx.rds" "$R/pseudobulk/pseudobulk_counts.rds"
+apptainer exec $SIF Rscript "$WORKDIR/scripts/pb/pseudobulk_edgeR.R" not_needed "$R/pseudobulk" /path/to/tables
+apptainer exec $SIF Rscript "$WORKDIR/scripts/pb/pseudobulk_followup.R" "$R/pseudobulk/pseudobulk_counts.rds" "$R/pseudobulk_followup" /path/to/tables
+# Global concordance of log2 fold changes, primary vs corrected (Supplementary Table S5f), and the numbers cited in the text
+apptainer exec $SIF python3 -I "$WORKDIR/scripts/ambient/soupx_concordance.py" "$WORKDIR/results/pseudobulk/de" "$R/pseudobulk/de" "$R/concordance"
+apptainer exec $SIF python3 -I "$WORKDIR/scripts/ambient/soupx_text_numbers.py" "$R" "$WORKDIR/results/pseudobulk"

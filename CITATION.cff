@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use this code, please cite the article below."
 title: "Analysis code: Interferon-linked transcription and chromatin accessibility extend to naive T cells in multisystem inflammatory syndrome in children"
-version: "2.0"
+version: "2.1"
 license: MIT
-# Concept DOI (all versions). The article cites release v2.0: 10.5281/zenodo.24120696
+# Concept DOI (all versions). Release v2.1 (version DOI assigned by Zenodo on release)
 doi: "10.5281/zenodo.24120695"
 authors:
   - {family-names: "Jenko Bizjan", given-names: "Barbara"}

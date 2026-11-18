@@ -1,4 +1,4 @@
-# A6 (reviewer checklist): recompute paired composition tests from the per-patient
+# Recompute paired composition tests from the per-patient
 # cell-count CSVs used for Table S4 / S4a, and check exact vs normal-approximation
 # p-values, zero/tie handling, BH family size, and absolute counts per subset.
 # Input: per-patient count tables cell_type_matrix_P*.csv
@@ -28,7 +28,7 @@ g$tot_r <- ave(g$remission, g$patient, FUN = sum)
 g$p_f <- g$flare / g$tot_f
 g$p_r <- g$remission / g$tot_r
 
-# Absolute counts table (checklist: new supplementary table).
+# Absolute counts table (Supplementary Table S3).
 counts_wide <- reshape(g[, c("patient", "cell_type", "flare", "remission")],
                        idvar = "cell_type", timevar = "patient", direction = "wide")
 write.table(counts_wide, file.path(out_dir, "nuclei_counts_per_subset_per_sample.tsv"),
