@@ -4,8 +4,6 @@ source("./scripts/normalize.R")
 source("./scripts/batch_effect.R")
 source("./scripts/annotate_and_integrate.R")
 source("./scripts/DE.R")
-source("./scripts/GSEA.R")
-source("./scripts/FigR.R")
 
 
 ################################################################################
@@ -22,7 +20,7 @@ output_dir <- "./results"
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 # set cell type reference
-# download an annotated PBMC reference dataset from Hao et al. (2020) from here: 
+# download an annotated PBMC reference dataset from Hao et al. (2020) from here:
 # https://atlas.fredhutch.org/data/nygc/multimodal/pbmc_multimodal.h5seurat
 cell_reference <- "./resources/pbmc_multimodal.h5seurat" #'[ For HPC change the path to the one you bind (Example: `/home/resources/pbmc_multimodal.h5seurat` ]
 
@@ -44,10 +42,10 @@ data.type <- c("MISC", "Control")
 
 # iterate over each patient and merge them into one Seurat object
 for (i in 1:length(patients)) {
-  data <- preprocess(patient_id = patients[i], 
-                     misc_sample = misc_samples[i], 
-                     control_sample = control_samples[i], 
-                     output_dir = output_dir, 
+  data <- preprocess(patient_id = patients[i],
+                     misc_sample = misc_samples[i],
+                     control_sample = control_samples[i],
+                     output_dir = output_dir,
                      nCores = nCores)
   k <- 1
   for (x in data) {
@@ -67,7 +65,7 @@ gc()
 
 # merge Seurat for each patient separately
 pbmc_merged <- sapply(patients, function(patient) {
-  merge(x = seurat_objects[startsWith(names(seurat_objects), patient)][[1]], 
+  merge(x = seurat_objects[startsWith(names(seurat_objects), patient)][[1]],
         y = seurat_objects[startsWith(names(seurat_objects), patient)][[2]])
   }, simplify = FALSE, USE.NAMES = TRUE)
 
@@ -102,17 +100,17 @@ gc()
 
 
 # annotate cell types
-pbmc_merged <- lapply(pbmc_merged, 
-                      function(dataset) annotate(data = dataset, 
-                                                 cell_reference = cell_reference, 
+pbmc_merged <- lapply(pbmc_merged,
+                      function(dataset) annotate(data = dataset,
+                                                 cell_reference = cell_reference,
                                                  reduction = 'pca'))
 harmonized_seurat <- annotate(data = harmonized_seurat, cell_reference = cell_reference, reduction = 'harmony_pca')
 gc()
 
 # integrate across conditions
-pbmc_merged <- sapply(names(pbmc_merged), 
-                      function(patient) integrate(data = pbmc_merged[[patient]], 
-                                                  genes_of_interest = genes_of_interest, 
+pbmc_merged <- sapply(names(pbmc_merged),
+                      function(patient) integrate(data = pbmc_merged[[patient]],
+                                                  genes_of_interest = genes_of_interest,
                                                   output = paste0(output_dir, "/per_patient/", patient)),
                       simplify = FALSE, USE.NAMES = TRUE)
 harmonized_seurat <- integrate(data = harmonized_seurat, genes_of_interest = genes_of_interest, output = paste0(output_dir, "/all_patients"))
@@ -127,15 +125,19 @@ saveRDS(harmonized_seurat, file = paste0(output_dir, "/harmonized_seurat_final.r
 ################################################################################
 
 
+# cell counts per population and condition (cell_type_count.txt) and cell-level differential expression.
+# The cell-level FindMarkers results are not used in the article
+# (differential expression in the article: paired pseudobulk, article_analyses/scripts/pb/).
+
 # prepare data for differential expression analysis
 pbmc_merged <- lapply(pbmc_merged, prepare_DE)
 harmonized_seurat <- prepare_DE(harmonized_seurat)
 
 # perform differential expression analysis
 #options(future.globals.maxSize=8500*1024^2)
-DE_merged <- sapply(names(pbmc_merged), 
-                    function(patient) run_DE(data = pbmc_merged[[patient]], 
-                                             genes_of_interest = genes_of_interest, 
+DE_merged <- sapply(names(pbmc_merged),
+                    function(patient) run_DE(data = pbmc_merged[[patient]],
+                                             genes_of_interest = genes_of_interest,
                                              output = paste0(output_dir, "/per_patient/", patient)),
                     simplify = FALSE, USE.NAMES = TRUE)
 DE_harmonized <- run_DE(data = harmonized_seurat, genes_of_interest = genes_of_interest, output = paste0(output_dir, "/all_patients"))
@@ -144,33 +146,6 @@ DE_harmonized <- run_DE(data = harmonized_seurat, genes_of_interest = genes_of_i
 get_DE_merged(data = DE_merged, output = paste0(output_dir, "/per_patient/"))
 get_DE_harmonized(data = DE_harmonized, output = paste0(output_dir, "/all_patients"))
 
-
-################################################################################
-
-
-# run gene set enrichment analysis
-run_fgsea(data = DE_harmonized, output_dir = output_dir)
-run_irGSEA(data = harmonized_seurat, output_dir = output_dir, nCores = nCores)
-
 # clean up
 rm(DE_merged, DE_harmonized)
 gc()
-
-
-################################################################################
-
-
-# run regulatory network and DORC analysis
-sapply(names(pbmc_merged), 
-       function(patient) run_FigR(data = pbmc_merged[[patient]], 
-                                  output = paste0(output_dir, "/per_patient/", patient),
-                                  nCores = nCores,
-                                  patient_id = patient,
-                                  genes_of_interest = genes_of_interest),
-       simplify = FALSE, USE.NAMES = TRUE)
-gc()
-run_FigR(data = harmonized_seurat,
-         output = paste0(output_dir, "/per_patient/", patient),
-         nCores = nCores,
-         patient_id = "all_patients",
-         genes_of_interest = genes_of_interest)
